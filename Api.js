@@ -62,11 +62,30 @@ function handleResponse(data, res, tempFolder) {
         } else {
           files.forEach((file) => {
             const filePath = path.join(tempFolder, file);
-            fs.unlink(filePath, (err) => {
+
+            fs.stat(filePath, (err, stats) => {
               if (err) {
-                console.log("Error deleting file:", err);
+                console.log("Error getting file stats:", err);
               } else {
-                console.log(`Successfully deleted file: ${filePath}`);
+                if (stats.isFile()) {
+                  fs.unlink(filePath, (err) => {
+                    if (err) {
+                      console.log("Error deleting file:", err);
+                    } else {
+                      console.log(`Successfully deleted file: ${filePath}`);
+                    }
+                  });
+                } else if (stats.isDirectory()) {
+                  fs.rmdir(filePath, (err) => {
+                    if (err) {
+                      console.log("Error deleting directory:", err);
+                    } else {
+                      console.log(
+                        `Successfully deleted directory: ${filePath}`
+                      );
+                    }
+                  });
+                }
               }
             });
           });
