@@ -38,7 +38,7 @@ app.post("/compile", function (req, res) {
     compiler.compileJavaWithInput(envData, code, input, function (data) {
       handleResponse(data, res, tempFolder);
     });
-  } else if (lang === "C++") {
+  } else if (lang === "Cpp") {
     envData = {
       OS: "windows",
       cmd: "g++",
