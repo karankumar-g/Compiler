@@ -9,22 +9,24 @@ const options = { stats: true };
 compiler.init(options);
 
 app.use(bodyP.json());
+
+// Use relative path for static files
 app.use(
   "/codemirror-5.65.17",
-  express.static("C:/Users/Karan/Desktop/Compiler/codemirror-5.65.17")
+  express.static(path.join(__dirname, "codemirror-5.65.17"))
 );
 
 app.get("/", function (req, res) {
   compiler.flush(function () {
     console.log("Deleted the Files");
   });
-  res.sendFile("C:/Users/Karan/Desktop/Compiler/index.html");
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 app.post("/compile", function (req, res) {
   const { code, input, lang } = req.body;
 
-  const tempFolder = "C:/Users/Karan/Desktop/Compiler/temp";
+  const tempFolder = path.join(__dirname, "temp");
   let envData;
   if (lang === "Python") {
     envData = { OS: "windows" };
