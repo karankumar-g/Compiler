@@ -10,12 +10,12 @@ compiler.init(options);
 
 app.use(bodyP.json());
 
-// Use relative path for static files
 app.use(
   "/codemirror-5.65.17",
   express.static(path.join(__dirname, "codemirror-5.65.17"))
 );
 
+// Serve the main HTML file
 app.get("/", function (req, res) {
   compiler.flush(function () {
     console.log("Deleted the Files");
@@ -62,7 +62,6 @@ function handleResponse(data, res, tempFolder) {
         } else {
           files.forEach((file) => {
             const filePath = path.join(tempFolder, file);
-
             fs.unlink(filePath, (err) => {
               if (err) {
                 console.log("Error deleting file:", err);
@@ -77,6 +76,9 @@ function handleResponse(data, res, tempFolder) {
   }
 }
 
-app.listen(8080, () => {
-  console.log("Server running on port 8080");
+const server = app.listen(process.env.PORT || 8080, "0.0.0.0", () => {
+  console.log("Server running on port", process.env.PORT || 8080);
 });
+
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 120000;
