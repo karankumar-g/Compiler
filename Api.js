@@ -4,15 +4,17 @@ const fs = require("fs");
 const bodyP = require("body-parser");
 const compiler = require("compilex");
 const path = require("path");
+const { exec } = require("child_process");
 
 const options = { stats: true };
 compiler.init(options);
 
 app.use(bodyP.json());
 
+// Serve static files for CodeMirror
 app.use(
   "/codemirror-5.65.17",
-  express.static(path.join(__dirname, "codemirror-5.65.17"))
+  express.static(path.resolve(__dirname, "codemirror-5.65.17"))
 );
 
 // Serve the main HTML file
@@ -20,27 +22,37 @@ app.get("/", function (req, res) {
   compiler.flush(function () {
     console.log("Deleted the Files");
   });
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.resolve(__dirname, "index.html"));
+});
+
+// Check if Java is available
+exec("java -version", (err, stdout, stderr) => {
+  if (err) {
+    console.error("Java is not available:", err);
+  } else {
+    console.log("Java version:", stdout || stderr);
+  }
 });
 
 app.post("/compile", function (req, res) {
   const { code, input, lang } = req.body;
 
-  const tempFolder = path.join(__dirname, "temp");
+  const tempFolder = path.resolve(__dirname, "temp");
   let envData;
+
   if (lang === "Python") {
-    envData = { OS: "windows" };
+    envData = { OS: process.platform === "win32" ? "windows" : "linux" };
     compiler.compilePythonWithInput(envData, code, input, function (data) {
       handleResponse(data, res, tempFolder);
     });
   } else if (lang === "Java") {
-    envData = { OS: "windows" };
+    envData = { OS: process.platform === "win32" ? "windows" : "linux" }; // Use 'linux' for Render
     compiler.compileJavaWithInput(envData, code, input, function (data) {
       handleResponse(data, res, tempFolder);
     });
   } else if (lang === "Cpp") {
     envData = {
-      OS: "windows",
+      OS: process.platform === "win32" ? "windows" : "linux",
       cmd: "g++",
     };
     compiler.compileCPPWithInput(envData, code, input, function (data) {
@@ -91,10 +103,11 @@ function handleResponse(data, res, tempFolder) {
           });
         }
       });
-    }, 500);
+    }, 2000); // Increased timeout to 2 seconds for Render environment
   }
 }
 
+// Start the server
 const server = app.listen(process.env.PORT || 8080, "0.0.0.0", () => {
   console.log("Server running on port", process.env.PORT || 8080);
 });
