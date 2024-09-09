@@ -15,6 +15,7 @@ app.use(
   express.static(path.join(__dirname, "codemirror-5.65.17"))
 );
 
+// Serve the main HTML file
 app.get("/", function (req, res) {
   compiler.flush(function () {
     console.log("Deleted the Files");
@@ -55,44 +56,40 @@ function handleResponse(data, res, tempFolder) {
 
   if (data.output) {
     setTimeout(() => {
-      // Helper function to delete a file or directory
-      function deleteFileOrDirectory(filePath) {
-        fs.stat(filePath, (err, stats) => {
-          if (err) {
-            console.log("Error getting file stats:", err);
-            return;
-          }
-
-          if (stats.isFile()) {
-            fs.unlink(filePath, (err) => {
-              if (err) {
-                console.log("Error deleting file:", err);
-              } else {
-                console.log(`Successfully deleted file: ${filePath}`);
-              }
-            });
-          } else if (stats.isDirectory()) {
-            fs.rmdir(filePath, (err) => {
-              if (err) {
-                console.log("Error deleting directory:", err);
-              } else {
-                console.log(`Successfully deleted directory: ${filePath}`);
-              }
-            });
-          }
-        });
-      }
-
       fs.readdir(tempFolder, (err, files) => {
         if (err) {
           console.log("Error reading temp directory:", err);
-          return;
-        }
+        } else {
+          files.forEach((file) => {
+            const filePath = path.join(tempFolder, file);
 
-        files.forEach((file) => {
-          const filePath = path.join(tempFolder, file);
-          deleteFileOrDirectory(filePath);
-        });
+            fs.stat(filePath, (err, stats) => {
+              if (err) {
+                console.log("Error getting file stats:", err);
+              } else {
+                if (stats.isFile()) {
+                  fs.unlink(filePath, (err) => {
+                    if (err) {
+                      console.log("Error deleting file:", err);
+                    } else {
+                      console.log(`Successfully deleted file: ${filePath}`);
+                    }
+                  });
+                } else if (stats.isDirectory()) {
+                  fs.rmdir(filePath, (err) => {
+                    if (err) {
+                      console.log("Error deleting directory:", err);
+                    } else {
+                      console.log(
+                        `Successfully deleted directory: ${filePath}`
+                      );
+                    }
+                  });
+                }
+              }
+            });
+          });
+        }
       });
     }, 500);
   }
